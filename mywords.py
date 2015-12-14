@@ -101,25 +101,24 @@ class EnWords():
             f.write(json.dumps(words, ensure_ascii=False))
         return True
 
-    def read_json_words(self,from_txt=False):
-        if from_txt:
-            with open(self.words_file, 'r') as f:
-                self.json_words = json.load(f)
-                return
+    def read_json_words(self):
+        with open(self.words_file, 'r') as f:
+            self.json_words = json.load(f)
+            return
 
     def read_words(self, limit=10):
         conn = sqlite3.connect(self.db_name)
         c = conn.cursor()
 
-        # is table exists?
         c.execute('''SELECT word, translation FROM 'words'
                   WHERE length(word) < 15 ORDER BY RANDOM() LIMIT %d;''' % limit)
         self.words = c.fetchall() 
+        conn.close()
         return
 
     def write_words_to_db(self,):
         # is words already loaded to self.json_words
-        if not hasattr(self, 'words'):
+        if not hasattr(self, 'json_words'):
             self.read_json_words()
 
         conn = sqlite3.connect(self.db_name)
@@ -132,11 +131,11 @@ class EnWords():
         if not c.fetchone():
             # Create table
             c.execute('''CREATE TABLE words
-                         (word text,
+                         (id integer primary key,
+                         word text,
                          transcription text,
-                         translation text,
-                         score integer default 0,
-                         learned boolean default 0)''')
+                         translation text);
+                         ''')
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         conn.close()
@@ -184,10 +183,10 @@ def main():
     my_words = EnWords(db_name='engwords.db')
     #my_words.parse_words_from_ll()
     #my_words.parse_words_from_lltxt()
-    my_words.read_words()
-    #my_words.write_words_to_db()
-    my_test = EngTests(my_words.words)
-    my_test.write_word()
+    #my_words.read_words()
+    my_words.write_words_to_db()
+    #my_test = EngTests(my_words.words)
+    #my_test.write_word()
     return
 
 

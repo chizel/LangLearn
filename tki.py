@@ -21,8 +21,8 @@ def my_prog():
     root.title('English quizes')
 
     # main menu
-    main_menu = Menu(root, tearoff=0)
-    main_menu.add_command(label="Quit", command=root.destroy)
+    #main_menu = Menu(root, tearoff=0)
+    #main_menu.add_command(label="Quit", command=root.destroy)
     root.config(menu=main_menu)
     # create a menu
     menu = Menu(root)
@@ -92,7 +92,6 @@ def my_prog():
     return
 
 
-def write_word(word)
 def main():
     return
 
