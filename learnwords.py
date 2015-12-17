@@ -45,9 +45,25 @@ class LearnWords():
         random.shuffle(res)
         return res
 
+    def init_main_frame(self, sx=0, sy=0, px=0, py=0):
+        self.main_frame = tk.Frame(self.root, width=sx, height=sy)
+        self.main_frame.place(x=px, y=py)
+        return
+
     def init_gui(self, font_size=18):
         self.root = tk.Tk()
         self.font_size = font_size
+
+        self.min_x = 800
+        self.min_y = 500
+        max_x = 800
+        max_y = 500
+        self.root.minsize(self.min_x, self.min_y)
+        self.root.maxsize(max_x, max_y)
+
+        self.init_main_frame(sx=self.min_x,
+                             sy=self.min_y
+                             )
 
         # menu
         menu_bar = tk.Menu(self.root)
@@ -69,23 +85,19 @@ class LearnWords():
         self.root.config(menu=menu_bar)
         # end menu
 
-
-        min_x = 800
-        max_x = 800
-        min_y = 500
-        max_y = 500
-        self.root.minsize(min_x, min_y)
-        self.root.maxsize(max_x, max_y)
         #screen_width = root.winfo_screenwidth()
         #screen_height = root.winfo_screenheight()
         self.root.mainloop()
 
     def guess_word_translation(self, word_count=10):
+        self.init_main_frame(sx=self.min_x,
+                             sy=self.min_y
+                             )
         self.read_words(random=True, limit=word_count)
         self.pos = 0
 
         self.root.title('Guess word translation')
-        frame = tk.Frame(self.root, bd=5, relief=tk.RIDGE, width=800, height=500)
+        frame = tk.Frame(self.main_frame, bd=5, relief=tk.RIDGE, width=800, height=500)
         frame.place(x=100,y=100)
         #frame.configure(background='black')
 
@@ -152,10 +164,13 @@ class LearnWords():
         return
 
     def spell_word(self, word_count=10):
+        self.init_main_frame(sx=self.min_x,
+                             sy=self.min_y
+                             )
         self.read_words(word_count)
-        frame = tk.Frame(self.root, bd=5, relief=tk.RIDGE, width=800, height=500)
+        self.root.title('Spell words')
+        frame = tk.Frame(self.main_frame, bd=5, relief=tk.RIDGE, width=800, height=500)
         frame.place(x=100,y=100)
-        frame.focus()
         self.pos = 0
 
         # label with result
@@ -170,7 +185,6 @@ class LearnWords():
         answer_ent.pack()
 
         def check_answer():
-            print('iiii')
             answer = answer_ent.get()
             answer_ent.delete(0, 'end')
 
@@ -191,7 +205,7 @@ class LearnWords():
                             text=self.words[self.pos][1])
         word_lbl.pack()
 
-        self.root.bind('<Return>', lambda e: check_answer())
+        answer_ent.bind('<Return>', lambda e: check_answer())
 
         # button to answer
         answer_btn = tk.Button(frame,
