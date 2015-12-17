@@ -72,13 +72,18 @@ class LearnWords():
 
         task_menu = tk.Menu(menu_bar, tearoff=0)
         menu_bar.add_cascade(label='Tasks', menu=task_menu)
-        task_menu.add_command(label='Spell words', command=self.spell_word)
-        task_menu.add_command(label='Guess word translation',
-                              command=self.guess_word_translation)
-        task_menu.add_command(label='Translation-word',
-                              command=self.translation_word)
-        task_menu.add_command(label='Word-translation',
-                              command=self.word_translation)
+        task_menu.add_command(
+            label='Spell words',
+            command=self.spell_word)
+        task_menu.add_command(
+            label='Guess word translation',
+            command=self.guess_word_translation)
+        task_menu.add_command(
+            label='Translation-word',
+            command=lambda: self.word_translation(display=1))
+        task_menu.add_command(
+            label='Word-translation',
+            command=self.word_translation)
 
         help_menu = tk.Menu(menu_bar, tearoff=0)
         menu_bar.add_cascade(label='Help', menu=help_menu)
@@ -92,6 +97,7 @@ class LearnWords():
         self.root.bind('<Control-q>', lambda e: self.root.destroy())
         self.root.bind('<Control-Q>', lambda e: self.root.destroy())
         self.root.mainloop()
+        return
 
     def guess_word_translation(self, word_count=10):
         self.init_main_frame(sx=self.min_x,
@@ -150,7 +156,8 @@ class LearnWords():
                            lambda e: check_answer(right_lbl.cget('text')))
             right_lbl.grid(row=1, column=2)
 
-            frame.bind('<Right>', lambda e: check_answer(right_lbl.cget('text')))
+            frame.bind('<Right>',
+                       lambda e: check_answer(right_lbl.cget('text')))
             frame.bind('<Left>', lambda e: check_answer(left_lbl.cget('text')))
             self.result[0] = 0
             self.result[1] = word_count
@@ -167,8 +174,9 @@ class LearnWords():
 
             self.pos += 1
             if self.pos >= word_count:
-                # send result to main window
                 frame.destroy()
+                # send result to main window
+                self.show_result()
                 return
             fill_lbl()
 
@@ -219,10 +227,10 @@ class LearnWords():
                 result_lbl.config(text=tmp_msg)
 
             self.pos += 1
-
             if self.pos >= word_count:
-                # send result to main window
                 frame.destroy()
+                # send result to main window
+                self.show_result()
                 return
             word_lbl.config(text=self.words[self.pos][1])
 
@@ -242,11 +250,94 @@ class LearnWords():
         answer_btn.pack()
         return
 
-    def word_translation(self, word_count=10):
+    def word_translation(self, word_count=10, display=0):
+        self.init_main_frame(sx=self.min_x,
+                             sy=self.min_y
+                             )
+        self.read_words(random=True, limit=word_count)
+        self.pos = 0
+
+        if display == 0:
+            word_guess = 1
+            window_title = 'Translation-word'
+        else:
+            word_guess = 0
+            window_title = 'Word-translation'
+
+        self.root.title(window_title)
+
+        # TODO frame's size not wotking!!!
+        frame = tk.Frame(self.main_frame,
+                         width=700,
+                         height=400,
+                         bd=5,
+                         relief=tk.RIDGE,
+                         )
+        frame.place(x=0, y=0)
+
+        word_lbl = tk.Label(frame,
+                            font=self.font_size,
+                            text='Press enter to start',
+                            width=20,
+                            wraplength=150,
+                            justify=tk.CENTER
+                            )
+        result_lbl = tk.Label(frame,
+                              font=self.font_size)
+        str_lbls = [tk.StringVar() for _ in range(4)]
+        lbls = [tk.Label(frame,
+                         textvariable=str_lbls[i],
+                         font=self.font_size) for i in range(4)]
+
+        def fill_lbl():
+            word = self.words[self.pos]
+            word_lbl.configure(text=word[display])
+            word_lbl.configure(bg='red')
+            guesses = self.get_random_items(self.words, 4, self.pos)
+            for i in range(4):
+                str_lbls[i].set(guesses[i][word_guess])
+
+        def init():
+            frame.bind('<Return>', lambda e: 1)
+            for i in range(4):
+                tmp_f = lambda e, i=i: check_answer(i)
+                lbls[i].bind('<Button-1>', tmp_f)
+                frame.bind(str(i + 1), tmp_f)
+            self.result[0] = 0
+            self.result[1] = word_count
+            self.pos = 0
+            fill_lbl()
+
+        def check_answer(lbl_id):
+            if str_lbls[lbl_id].get() == self.words[self.pos][word_guess]:
+                result_lbl.config(text='Right!')
+                self.result[0] += 1
+            else:
+                msg = str_lbls[lbl_id].get()
+                msg += ' not ' + self.words[self.pos][word_guess]
+                result_lbl.config(text=msg)
+
+            self.pos += 1
+            if self.pos >= word_count:
+                frame.destroy()
+                # send result to main window
+                self.show_result()
+                return
+            fill_lbl()
+
+        frame.bind('<Return>', lambda e: init())
+        word_lbl.grid(row=0, column=0)
+        result_lbl.grid(row=1, column=0)
+        for i in range(4):
+            lbls[i].grid(row=i, column=1)
+        frame.focus()
         return
 
-    def translation_word(self, word_count=10):
+    def show_result(self):
+        msg = str(self.result[0]) + ' from ' + str(self.result[1])
+        tk.Label(self.main_frame, text=msg).pack()
         return
+
     def show_help(self):
         # TODO add more info
         help_window = tk.Toplevel()
