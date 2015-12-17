@@ -9,8 +9,11 @@ import random
 class LearnWords():
     def __init__(self, db_name='engwords.db'):
         self.db_name = db_name
+        # [number of right answers, all answers count]
+        self.result = [0, 0]
 
     def read_words(self, random=True, limit=10):
+        # TODO decide where to place this code
         # for random answers
         limit *= 2
         conn = sqlite3.connect(self.db_name)
@@ -29,12 +32,6 @@ class LearnWords():
         self.words = c.fetchall()
         conn.close()
         return
-
-    def get_words(self, word_count=10):
-        self.read_words(random=True, limit=word_count)
-        for i in range(word_count):
-            yield self.words[i]
-        return None
 
     def get_random_items(self, items, items_count, include):
         res = random.sample(items, items_count)
@@ -67,26 +64,33 @@ class LearnWords():
 
         # menu
         menu_bar = tk.Menu(self.root)
-        
+
         file_menu = tk.Menu(menu_bar, tearoff=0)
-        menu_bar.add_cascade(label="File", menu=file_menu)
+        menu_bar.add_cascade(label='File', menu=file_menu)
         file_menu.add_separator()
-        file_menu.add_command(label="Exit", command=self.root.destroy)
+        file_menu.add_command(label='Exit', command=self.root.destroy)
 
         task_menu = tk.Menu(menu_bar, tearoff=0)
         menu_bar.add_cascade(label='Tasks', menu=task_menu)
         task_menu.add_command(label='Spell words', command=self.spell_word)
-        task_menu.add_command(label='Guess word translation', command=self.guess_word_translation)
+        task_menu.add_command(label='Guess word translation',
+                              command=self.guess_word_translation)
+        task_menu.add_command(label='Translation-word',
+                              command=self.translation_word)
+        task_menu.add_command(label='Word-translation',
+                              command=self.word_translation)
 
         help_menu = tk.Menu(menu_bar, tearoff=0)
-        menu_bar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="About...", command='')
+        menu_bar.add_cascade(label='Help', menu=help_menu)
+        # TODO add help
+        help_menu.add_command(label='Help', command=self.show_help)
+        help_menu.add_command(label='About', command=self.show_about)
 
         self.root.config(menu=menu_bar)
         # end menu
 
-        #screen_width = root.winfo_screenwidth()
-        #screen_height = root.winfo_screenheight()
+        self.root.bind('<Control-q>', lambda e: self.root.destroy())
+        self.root.bind('<Control-Q>', lambda e: self.root.destroy())
         self.root.mainloop()
 
     def guess_word_translation(self, word_count=10):
@@ -97,9 +101,13 @@ class LearnWords():
         self.pos = 0
 
         self.root.title('Guess word translation')
-        frame = tk.Frame(self.main_frame, bd=5, relief=tk.RIDGE, width=800, height=500)
-        frame.place(x=100,y=100)
-        #frame.configure(background='black')
+        frame = tk.Frame(self.main_frame,
+                         width=800,
+                         height=500,
+                         bd=5,
+                         relief=tk.RIDGE,
+                         )
+        frame.place(x=100, y=100)
 
         word_lbl = tk.Label(frame,
                             font=self.font_size,
@@ -120,46 +128,54 @@ class LearnWords():
                             wraplength=150,
                             )
         right_lbl = tk.Label(frame,
-                            text='',
-                            font=self.font_size,
-                            width=20,
-                            wraplength=150,
-                            )
+                             text='',
+                             font=self.font_size,
+                             width=20,
+                             wraplength=150,
+                             )
 
-        def init():
+        def fill_lbl():
             word = self.words[self.pos]
             word_lbl.configure(text=word[1])
             guesses = self.get_random_items(self.words, 2, self.pos)
             left_lbl.configure(text=guesses[0][0])
             right_lbl.configure(text=guesses[1][0])
 
+        def init():
+            frame.bind('<Return>', lambda e: 1)
+            left_lbl.bind('<Button-1>',
+                          lambda e: check_answer(left_lbl.cget('text')))
+            left_lbl.grid(row=1, column=0)
+            right_lbl.bind('<Button-1>',
+                           lambda e: check_answer(right_lbl.cget('text')))
+            right_lbl.grid(row=1, column=2)
+
+            frame.bind('<Right>', lambda e: check_answer(right_lbl.cget('text')))
+            frame.bind('<Left>', lambda e: check_answer(left_lbl.cget('text')))
+            self.result[0] = 0
+            self.result[1] = word_count
+            fill_lbl()
+
         def check_answer(answer):
             word = self.words[self.pos]
 
             if answer == word[0]:
                 result_lbl.config(text='Right!')
+                self.result[0] += 1
             else:
                 result_lbl.config(text='Wrong!')
 
             self.pos += 1
             if self.pos >= word_count:
-                #!!!!!!!!!!!!!!!!!!!!! destroing frame
-                #!!!!!!!!!!!!!!!!!!!!! need more polishing
+                # send result to main window
                 frame.destroy()
                 return
-            init()
+            fill_lbl()
 
+        frame.bind('<Return>', lambda e: init())
         word_lbl.grid(row=0, column=1)
         word_lbl.configure(background='orange')
-        result_lbl.grid(row=1,column=1)
-        left_lbl.bind('<Button-1>', lambda e: check_answer(left_lbl.cget('text')))
-        left_lbl.grid(row=1, column=0)
-        right_lbl.bind('<Button-1>', lambda e: check_answer(right_lbl.cget('text')))
-        right_lbl.grid(row=1, column=2)
-
-        frame.bind('<Right>', lambda e: check_answer(right_lbl.cget('text')))
-        frame.bind('<Left>', lambda e: check_answer(left_lbl.cget('text')))
-        frame.bind('<Return>', lambda e: init())
+        result_lbl.grid(row=1, column=1)
         frame.focus()
         return
 
@@ -169,8 +185,13 @@ class LearnWords():
                              )
         self.read_words(word_count)
         self.root.title('Spell words')
-        frame = tk.Frame(self.main_frame, bd=5, relief=tk.RIDGE, width=800, height=500)
-        frame.place(x=100,y=100)
+        frame = tk.Frame(self.main_frame,
+                         width=800,
+                         height=500,
+                         bd=5,
+                         relief=tk.RIDGE,
+                         )
+        frame.place(x=100, y=100)
         self.pos = 0
 
         # label with result
@@ -183,6 +204,8 @@ class LearnWords():
                               width=50)
         answer_ent.focus()
         answer_ent.pack()
+        self.result[0] = 0
+        self.result[1] = word_count
 
         def check_answer():
             answer = answer_ent.get()
@@ -190,18 +213,22 @@ class LearnWords():
 
             if answer == self.words[self.pos][0]:
                 result_lbl.config(text='Right!')
+                self.result[0] += 1
             else:
-                result_lbl.config(text=answer + ' not ' + self.words[self.pos][0])
+                tmp_msg = answer + ' not ' + self.words[self.pos][0]
+                result_lbl.config(text=tmp_msg)
 
             self.pos += 1
-            if self.pos > word_count:
+
+            if self.pos >= word_count:
+                # send result to main window
                 frame.destroy()
                 return
             word_lbl.config(text=self.words[self.pos][1])
 
         # word translation label
         word_lbl = tk.Label(frame,
-                            font=self.font_size, 
+                            font=self.font_size,
                             text=self.words[self.pos][1])
         word_lbl.pack()
 
@@ -209,20 +236,42 @@ class LearnWords():
 
         # button to answer
         answer_btn = tk.Button(frame,
-                               text="Answer",
+                               text='Answer',
                                width=10,
                                command=check_answer)
         answer_btn.pack()
+        return
+
+    def word_translation(self, word_count=10):
+        return
+
+    def translation_word(self, word_count=10):
+        return
+    def show_help(self):
+        # TODO add more info
+        help_window = tk.Toplevel()
+        help_msg = 'Use arrow keys to answer in "Guess word"\n'
+        help_msg += 'Use enter to answer in "Spell word"\n'
+        help_msg += 'Use Control+q to quit the programm.\n'
+        tk.Label(help_window, text=help_msg).pack()
+        help_window.bind('<Control-q>', lambda e: help_window.destroy())
+        help_window.bind('<Control-Q>', lambda e: help_window.destroy())
+        return
+
+    def show_about(self):
+        # TODO add more info
+        about_window = tk.Toplevel()
+        tk.Label(about_window, text='This program is in developmnet').pack()
+        about_window.bind('<Control-q>', lambda e: about_window.destroy())
+        about_window.bind('<Control-Q>', lambda e: about_window.destroy())
         return
 
 
 def main():
     lw = LearnWords()
     lw.init_gui()
-    #lw.spell_word(10)
-    #lw.guess_word_translation(5)
     return
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
