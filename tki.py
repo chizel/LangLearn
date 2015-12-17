@@ -40,16 +40,15 @@ def my_prog():
     helpmenu.add_command(label="About...", command=my_callback)
 
     # create a toolbar
-    toolbar = Frame(root)
+#    toolbar = Frame(root)
 
-    b = Button(toolbar, text="new", width=6, command=my_callback)
-    b.pack(side=LEFT, padx=2, pady=2)
+    #b = Button(toolbar, text="new", width=6, command=my_callback)
+    #b.pack(side=LEFT, padx=2, pady=2)
 
-    b = Button(toolbar, text="open", width=6, commandmy_callback)
-    b.pack(side=LEFT, padx=2, pady=2)
+    #b = Button(toolbar, text="open", width=6, commandmy_callback)
+    #b.pack(side=LEFT, padx=2, pady=2)
 
-    toolbar.pack(side=TOP, fill=X)
-    mainloop()
+#    toolbar.pack(side=TOP, fill=X)
 #    def key(event):
         #print("pressed", repr(event.char))
 
