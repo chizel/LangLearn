@@ -32,7 +32,13 @@ class Crossword():
 
     def pfield(self):
         for line in self.field:
-            print(line)
+            s = ''
+            for cell in line:
+                if cell:
+                    s += cell
+                else:
+                    s += ' '
+            print(s)
         return
 
     def sort_words_by_length(self):
@@ -88,19 +94,12 @@ class Crossword():
     def place_word(self, word):
         word_len = len(word)
 
-        #def check_cell(r, c):
-            #self.field[r][c]
-            #return
-
-        def check_row(word, r, c):
-            return False
-
-        def check_column(word, char_pos, row_ind, column_ind):
+        def check_column(word, char_pos, row_id, column_id):
             # row index where first word's letter will be placed
             #1  d<====
             #2brother
             #3  g
-            start_row = row_ind - char_pos
+            start_row = row_id - char_pos
 
             # word will cross field's bounds
             if start_row < 0:
@@ -111,7 +110,7 @@ class Crossword():
             #2  d
             #3brother
             #4  g
-            if (start_row - 1) >= 0 and self.field[start_row - 1][column_ind]:
+            if (start_row - 1) >= 0 and self.field[start_row - 1][column_id]:
                 return False
 
             for i in range(len(word)):
@@ -119,24 +118,55 @@ class Crossword():
                     # this is where words crossing each other
                     continue
 
-                current_row_ind = start_row + i
+                current_row_id = start_row + i
 
                 # right cell
-                if self.field[current_row_ind + i][column_ind]:
+                if self.field[current_row_id][column_id + 1]:
                     return False
                 # left cell
-                elif self.field[current_row_ind - i][column_ind]:
+                elif self.field[current_row_id][column_id - 1]:
                     return False
-            return (start_row, column_ind, 'column')
+            return (start_row, column_id, 'column')
+
+        def check_row(word, char_pos, row_id, column_id):
+            # column index where first word's letter will be placed
+            start_column = column_id - char_pos
+
+            # Does word will cross field's borders
+            if start_column < 0:
+                return False
+
+            # does previous cell has something in it
+            if (start_column - 1) >= 0 and self.field[row_id][start_column - 1]:
+                return False
+
+            for i in range(len(word)):
+                if i == char_pos:
+                    # this is where words crossing each other
+                    continue
+
+                current_column_id = start_column + i
+
+                # upper cell
+                if self.field[row_id - 1][current_column_id]:
+                    return False
+                # lower cell
+                elif self.field[row_id + 1][current_column_id]:
+                    return False
+
+            return (row_id, start_column, 'row')
 
         for char_pos in range(word_len):
             if self.chars[word[char_pos]]:
                 # position was found, check it is it ok
-                coordinates  = self.chars[word[char_pos]]
+                coordinates = self.chars[word[char_pos]]
 
-                for row_ind, column_ind in coordinates:
-                    #check_row()
-                    res = check_column(word, char_pos, row_ind, column_ind)
+                for row_id, column_id in coordinates:
+                    res = check_row(word, char_pos, row_id, column_id)
+                    if res:
+                        self.write_word_to_field(word, *res)
+                        return True
+                    res = check_column(word, char_pos, row_id, column_id)
                     if res:
                         self.write_word_to_field(word, *res)
                         return True
@@ -147,8 +177,11 @@ class Crossword():
 
         # placing init word
         self.write_word_to_field(self.sorted_words[0], 3, 3, 'row')
-        self.place_word(self.sorted_words[1])
-        self.place_word(self.sorted_words[2])
+        for word in self.sorted_words[1:]:
+            self.place_word(word)
+
+        #self.place_word(self.sorted_words[1])
+        #self.place_word(self.sorted_words[2])
         self.pfield()
         #print(sorted(self.chars.items()))
         return None
