@@ -37,7 +37,7 @@ class Crossword():
                 if cell:
                     s += cell
                 else:
-                    s += ' '
+                    s += '*'
             print(s)
         return
 
@@ -52,12 +52,6 @@ class Crossword():
         (start and end of word).
 
         '''
-
-        # TODO: keep words' coordinates for simple navigation
-        #i.e. ((x0,y0)(x1,y1))
-        # TODO: keep letters' coordinates
-        #letters = {'a':[(0,0), (5,7)], 'b':[], c:[(1,0)], ...}
-
         word_len = len(word)
 
         if axis == 'row':
@@ -71,7 +65,7 @@ class Crossword():
                 self.field[r0][c0 + i] = word[i]
                 self.chars[word[i]].add((r0, c0 + i))
 
-            if c0 + i < self.size_c:
+            if c0 + i + 1 < self.size_c:
                 self.field[r0][c0 + i + 1] = '*'
 
         elif axis == 'column':
@@ -85,7 +79,7 @@ class Crossword():
                 self.field[r0 + i][c0] = word[i]
                 self.chars[word[i]].add((r0 + i, c0))
 
-            if r0 + i < self.size_r:
+            if r0 + i + 1< self.size_r:
                 self.field[r0 + i + 1][c0] = '*'
         else:
             raise TypeError('Wrong axis argument! Must be "row" or "column"!')
@@ -113,6 +107,10 @@ class Crossword():
             if (start_row - 1) >= 0 and self.field[start_row - 1][column_id]:
                 return False
 
+            # is cell after the last cell of the word has something in it?
+            if (start_row + word_len) < self.size_r and self.field[start_row + word_len][column_id]:
+                return False
+
             for i in range(len(word)):
                 if i == char_pos:
                     # this is where words crossing each other
@@ -120,8 +118,12 @@ class Crossword():
 
                 current_row_id = start_row + i
 
+#TODO CHECK BOUNDS!!!
                 # right cell
                 if self.field[current_row_id][column_id + 1]:
+                    return False
+                #current cell
+                if self.field[current_row_id][column_id]:
                     return False
                 # left cell
                 elif self.field[current_row_id][column_id - 1]:
@@ -129,6 +131,8 @@ class Crossword():
             return (start_row, column_id, 'column')
 
         def check_row(word, char_pos, row_id, column_id):
+            word_len = len(word)
+
             # column index where first word's letter will be placed
             start_column = column_id - char_pos
 
@@ -136,11 +140,15 @@ class Crossword():
             if start_column < 0:
                 return False
 
-            # does previous cell has something in it
+            # does cell prior the first cell has something in it
             if (start_column - 1) >= 0 and self.field[row_id][start_column - 1]:
                 return False
 
-            for i in range(len(word)):
+            # check is cell after the last word cell has something in it
+            if (start_column  + word_len) < self.size_c and self.field[row_id][start_column + word_len]:
+                return False
+
+            for i in range(word_len):
                 if i == char_pos:
                     # this is where words crossing each other
                     continue
@@ -150,10 +158,12 @@ class Crossword():
                 # upper cell
                 if self.field[row_id - 1][current_column_id]:
                     return False
+                # current cell
+                if self.field[row_id][current_column_id]:
+                    return False
                 # lower cell
                 elif self.field[row_id + 1][current_column_id]:
                     return False
-
             return (row_id, start_column, 'row')
 
         for char_pos in range(word_len):
@@ -165,11 +175,11 @@ class Crossword():
                     res = check_row(word, char_pos, row_id, column_id)
                     if res:
                         self.write_word_to_field(word, *res)
-                        return True
+                        return (res[0], res[1]) 
                     res = check_column(word, char_pos, row_id, column_id)
                     if res:
                         self.write_word_to_field(word, *res)
-                        return True
+                        return (res[0], res[1]) 
         return False
 
     def generate_crossword(self):
@@ -177,21 +187,52 @@ class Crossword():
 
         # placing init word
         self.write_word_to_field(self.sorted_words[0], 3, 3, 'row')
+        word_count = 1
+        word_coordinates = {}
+        word_coordinates[self.sorted_words[0]] = (3, 3)
+
         for word in self.sorted_words[1:]:
-            self.place_word(word)
+            coord = self.place_word(word)
+            if coord:
+                #save coordinates
+                word_coordinates[word] = coord
+                word_count += 1
+            if word_count == 15:
+                break
 
         #self.place_word(self.sorted_words[1])
         #self.place_word(self.sorted_words[2])
         self.pfield()
         #print(sorted(self.chars.items()))
-        return None
+        self.word_coordinates = word_coordinates
+        return
 
 
 def main():
-    words = ('transmission', 'pepper', 'trumpet', 'elephant', 'ocean',
-             'cottage', 'basketball', 'zoo')
+    #words = ('transmission', 'pepper', 'trumpet', 'elephant', 'ocean',
+             #'cottage', 'basketball', 'zoo')
+
+    #TODO REMOVE IT
+    import sqlite3
+    import re
+    #TODO END
+
+    conn = sqlite3.connect('engwords.db')
+    c = conn.cursor()
+    query = '''SELECT word, translation FROM "words"
+             WHERE length(word) < 15 ORDER BY RANDOM() LIMIT 30;'''
+    c.execute(query)
+    tmp_words = c.fetchall()
+    conn.close()
+    words = []
+
+    for word in tmp_words:
+        if re.match('^[a-z]+$', word[0]):
+            words.append(word[0])
+
     mc = Crossword(words, size_r=30, size_c=30)
     mc.generate_crossword()
+    print(mc.word_coordinates)
     return
 
 
