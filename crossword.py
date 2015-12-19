@@ -79,7 +79,7 @@ class Crossword():
                 self.field[r0 + i][c0] = word[i]
                 self.chars[word[i]].add((r0 + i, c0))
 
-            if r0 + i + 1< self.size_r:
+            if r0 + i + 1 < self.size_r:
                 self.field[r0 + i + 1][c0] = '*'
         else:
             raise TypeError('Wrong axis argument! Must be "row" or "column"!')
@@ -108,7 +108,8 @@ class Crossword():
                 return False
 
             # is cell after the last cell of the word has something in it?
-            if (start_row + word_len) < self.size_r and self.field[start_row + word_len][column_id]:
+            if (start_row + word_len) < self.size_r and\
+                    self.field[start_row + word_len][column_id]:
                 return False
 
             for i in range(len(word)):
@@ -141,11 +142,13 @@ class Crossword():
                 return False
 
             # does cell prior the first cell has something in it
-            if (start_column - 1) >= 0 and self.field[row_id][start_column - 1]:
+            if (start_column - 1) >= 0 and\
+                    self.field[row_id][start_column - 1]:
                 return False
 
             # check is cell after the last word cell has something in it
-            if (start_column  + word_len) < self.size_c and self.field[row_id][start_column + word_len]:
+            if (start_column + word_len) < self.size_c and\
+                    self.field[row_id][start_column + word_len]:
                 return False
 
             for i in range(word_len):
@@ -175,11 +178,11 @@ class Crossword():
                     res = check_row(word, char_pos, row_id, column_id)
                     if res:
                         self.write_word_to_field(word, *res)
-                        return (res[0], res[1]) 
+                        return (res[0], res[1])
                     res = check_column(word, char_pos, row_id, column_id)
                     if res:
                         self.write_word_to_field(word, *res)
-                        return (res[0], res[1]) 
+                        return (res[0], res[1])
         return False
 
     def generate_crossword(self):
