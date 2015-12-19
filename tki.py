@@ -16,7 +16,7 @@ def add_words():
 def my_prog():
     root = Tk()
     # icon
-    root.iconphoto(root, PhotoImage(file='./1.png')) 
+    root.iconphoto(root, PhotoImage(file='./1.png'))
     # title
     root.title('English quizes')
 
@@ -69,7 +69,6 @@ def my_prog():
 
     # Make window 300x150 and place at position (50,50)
     #root.geometry("500x350+400+300")
-
 
     #msg = Message(root, text='Hello, world!')
 

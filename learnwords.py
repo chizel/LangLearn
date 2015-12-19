@@ -34,6 +34,8 @@ class LearnWords():
         return
 
     def get_random_items(self, items, items_count, include):
+        '''Returns random items from 'items' in quntaty 'items_count'
+        with item[include]'''
         res = random.sample(items, items_count)
 
         if not items[include] in res:
@@ -43,11 +45,15 @@ class LearnWords():
         return res
 
     def init_main_frame(self, sx=0, sy=0, px=0, py=0):
+        '''Frame where all other frames placed.
+        To clear this main_frame just call this function'''
         self.main_frame = tk.Frame(self.root, width=sx, height=sy)
         self.main_frame.place(x=px, y=py)
         return
 
     def init_gui(self, font_size=18):
+        '''Initializing GUI. Creating root window, setting window size,
+        creating menubar'''
         self.root = tk.Tk()
         self.font_size = font_size
 
@@ -100,11 +106,12 @@ class LearnWords():
         return
 
     def guess_word_translation(self, word_count=10):
+        '''You're given word-translation and you need to guess to what
+        word from 2 given words it benongs'''
         self.init_main_frame(sx=self.min_x,
                              sy=self.min_y
                              )
         self.read_words(random=True, limit=word_count)
-        self.pos = 0
 
         self.root.title('Guess word translation')
         frame = tk.Frame(self.main_frame,
@@ -114,13 +121,11 @@ class LearnWords():
                          relief=tk.RIDGE,
                          )
         frame.place(x=100, y=100)
-
         word_lbl = tk.Label(frame,
                             font=self.font_size,
                             text='Press enter to start',
                             width=20,
                             wraplength=150,
-                            #anchor=tk.W,
                             justify=tk.CENTER
                             )
         result_lbl = tk.Label(frame,
@@ -141,13 +146,15 @@ class LearnWords():
                              )
 
         def fill_lbl():
-            word = self.words[self.pos]
-            word_lbl.configure(text=word[1])
+            '''Filling lefg_lbl and right_lbl'''
+            word_lbl.configure(text=self.words[self.pos][1])
             guesses = self.get_random_items(self.words, 2, self.pos)
             left_lbl.configure(text=guesses[0][0])
             right_lbl.configure(text=guesses[1][0])
 
         def init():
+            '''Initializing program, setting key bindings'''
+            # disabling return key
             frame.bind('<Return>', lambda e: 1)
             left_lbl.bind('<Button-1>',
                           lambda e: check_answer(left_lbl.cget('text')))
@@ -161,9 +168,12 @@ class LearnWords():
             frame.bind('<Left>', lambda e: check_answer(left_lbl.cget('text')))
             self.result[0] = 0
             self.result[1] = word_count
+            # current word position in words list
+            self.pos = 0
             fill_lbl()
 
         def check_answer(answer):
+            '''checks given answer'''
             word = self.words[self.pos]
 
             if answer == word[0]:
@@ -188,9 +198,9 @@ class LearnWords():
         return
 
     def spell_word(self, word_count=10):
-        self.init_main_frame(sx=self.min_x,
-                             sy=self.min_y
-                             )
+        '''You're given a word translation. You need to spell word from
+        memory'''
+        self.init_main_frame(sx=self.min_x, sy=self.min_y)
         self.read_words(word_count)
         self.root.title('Spell words')
         frame = tk.Frame(self.main_frame,
@@ -216,6 +226,7 @@ class LearnWords():
         self.result[1] = word_count
 
         def check_answer():
+            '''Answer checking'''
             answer = answer_ent.get()
             answer_ent.delete(0, 'end')
 
@@ -234,15 +245,11 @@ class LearnWords():
                 return
             word_lbl.config(text=self.words[self.pos][1])
 
-        # word translation label
         word_lbl = tk.Label(frame,
                             font=self.font_size,
                             text=self.words[self.pos][1])
         word_lbl.pack()
-
         answer_ent.bind('<Return>', lambda e: check_answer())
-
-        # button to answer
         answer_btn = tk.Button(frame,
                                text='Answer',
                                width=10,
@@ -251,6 +258,7 @@ class LearnWords():
         return
 
     def word_translation(self, word_count=10, display=0):
+        # TODO add informative docstring
         self.init_main_frame(sx=self.min_x,
                              sy=self.min_y
                              )
@@ -333,7 +341,15 @@ class LearnWords():
         frame.focus()
         return
 
+    def crossword(self, word_count=10):
+        self.init_main_frame(sx=self.min_x,
+                             sy=self.min_y
+                             )
+        self.read_words(random=True, limit=word_count)
+        return
+
     def show_result(self):
+        self.root.title('Result')
         msg = str(self.result[0]) + ' from ' + str(self.result[1])
         tk.Label(self.main_frame, text=msg).pack()
         return

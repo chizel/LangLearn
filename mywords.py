@@ -111,8 +111,10 @@ class EnWords():
         c = conn.cursor()
 
         c.execute('''SELECT word, translation FROM 'words'
-                  WHERE length(word) < 15 ORDER BY RANDOM() LIMIT %d;''' % limit)
-        self.words = c.fetchall() 
+                  WHERE length(word) < 15
+                  ORDER BY RANDOM()
+                  LIMIT %d;''' % limit)
+        self.words = c.fetchall()
         conn.close()
         return
 
@@ -158,7 +160,7 @@ class EnWords():
 
 class EngTests():
     def __init__(self, words):
-        # list of word-translation tuples 
+        # list of word-translation tuples
         random.shuffle(words)
         self.words = words
 
