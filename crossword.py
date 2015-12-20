@@ -1,6 +1,8 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import re
+
 
 class Crossword():
     def __init__(self, words, size_r=30, size_c=30):
@@ -10,8 +12,14 @@ class Crossword():
         # number of columns
         self.size_c = size_c
 
+        self.check_words()
         self.__init_field__()
         return
+
+    def check_words(self):
+        for word in self.words:
+            if not re.match('^[a-z]+$', word):
+                raise TypeError(word + ' contains wrong characters!')
 
     def __init_field__(self):
         '''generate empty crossword field by size size_r, size_c'''
@@ -219,7 +227,6 @@ def main():
 
     #TODO REMOVE IT
     import sqlite3
-    import re
     #TODO END
 
     conn = sqlite3.connect('engwords.db')
