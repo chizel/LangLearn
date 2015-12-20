@@ -92,8 +92,10 @@ class Crossword():
             #3  g
             start_row = row_id - char_pos
 
-            # word will cross field's bounds
+            # Does word will cross field's borders
             if start_row < 0:
+                return False
+            elif start_row + word_len >= self.size_r:
                 return False
 
             # check is upper cell has no letters
@@ -138,6 +140,8 @@ class Crossword():
 
             # Does word will cross field's borders
             if start_column < 0:
+                return False
+            elif start_column + word_len >= self.size_c:
                 return False
 
             # Does cell prior the first cell has smth in it
