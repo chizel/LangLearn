@@ -2,24 +2,15 @@
 # -*- coding: utf-8 -*-
 
 
-def show(*argv, **kwarg):
-    for arg in argv:
-        print(arg)
-    for k, v in kwarg.items():
-        prin(k, v)
-    exit()
-
-
 class Crossword():
     def __init__(self, words, size_r=30, size_c=30):
-        self.words = words
+        self.words = self.sort_words_by_length(words)
         # number of rows
         self.size_r = size_r
         # number of columns
         self.size_c = size_c
 
         self.__init_field__()
-        self.sort_words_by_length()
         return
 
     def __init_field__(self):
@@ -30,7 +21,7 @@ class Crossword():
             self.field.append(li[:])
         return
 
-    def pfield(self):
+    def print_field(self):
         for line in self.field:
             s = ''
             for cell in line:
@@ -41,9 +32,9 @@ class Crossword():
             print(s)
         return
 
-    def sort_words_by_length(self):
-        self.sorted_words = sorted(self.words, key=len, reverse=True)
-        return
+    def sort_words_by_length(self, words):
+        return sorted(words, key=len, reverse=True)
+        
 
     def write_word_to_field(self, word, r0, c0, axis):
         '''Write word to the field.
@@ -200,12 +191,12 @@ class Crossword():
         self.chars = {chr(a): set() for a in range(ord('a'), ord('z') + 1)}
 
         # placing init word
-        self.write_word_to_field(self.sorted_words[0], 3, 3, 'row')
+        self.write_word_to_field(self.words[0], 3, 3, 'row')
         word_count = 1
         word_coordinates = {}
-        word_coordinates[self.sorted_words[0]] = (3, 3)
+        word_coordinates[self.words[0]] = (3, 3)
 
-        for word in self.sorted_words[1:]:
+        for word in self.words[1:]:
             coord = self.place_word(word)
             if coord:
                 #save coordinates
@@ -214,12 +205,8 @@ class Crossword():
             if word_count == 15:
                 break
 
-        #self.place_word(self.sorted_words[1])
-        #self.place_word(self.sorted_words[2])
-        self.pfield()
-        #print(sorted(self.chars.items()))
-        self.word_coordinates = word_coordinates
-        return
+        
+        return word_coordinates
 
 
 def main():
@@ -245,8 +232,9 @@ def main():
             words.append(word[0])
 
     mc = Crossword(words, size_r=30, size_c=30)
-    mc.generate_crossword()
-    print(mc.word_coordinates)
+    coordinates = mc.generate_crossword()
+    mc.print_field()
+    print(coordinates)
     return
 
 
