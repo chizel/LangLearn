@@ -4,7 +4,8 @@
 import tkinter as tk
 import sqlite3
 import random
-
+import re
+from crossword import Crossword
 
 class LearnWords():
     def __init__(self, db_name='engwords.db'):
@@ -79,6 +80,9 @@ class LearnWords():
         task_menu = tk.Menu(menu_bar, tearoff=0)
         menu_bar.add_cascade(label='Tasks', menu=task_menu)
         task_menu.add_command(
+            label='Crossword',
+            command=self.crossword)
+        task_menu.add_command(
             label='Spell words',
             command=self.spell_word)
         task_menu.add_command(
@@ -93,12 +97,15 @@ class LearnWords():
 
         help_menu = tk.Menu(menu_bar, tearoff=0)
         menu_bar.add_cascade(label='Help', menu=help_menu)
-        # TODO add help
         help_menu.add_command(label='Help', command=self.show_help)
         help_menu.add_command(label='About', command=self.show_about)
 
         self.root.config(menu=menu_bar)
         # end menu
+
+        #TODO REMOVE
+        self.crossword()
+        #TODO END
 
         self.root.bind('<Control-q>', lambda e: self.root.destroy())
         self.root.bind('<Control-Q>', lambda e: self.root.destroy())
@@ -341,11 +348,38 @@ class LearnWords():
         frame.focus()
         return
 
-    def crossword(self, word_count=10):
+    def crossword(self, word_count=15):
         self.init_main_frame(sx=self.min_x,
                              sy=self.min_y
                              )
         self.read_words(random=True, limit=word_count)
+        frame = tk.Frame(self.main_frame,
+                         width=800,
+                         height=500,
+                         bd=5,
+                         relief=tk.RIDGE,
+                         )
+        words = []
+
+        for word in self.words:
+            if re.match('^[a-z]+$', word[0]):
+                words.append(word[0])
+
+        mc = Crossword(words, size_r=30, size_c=30)
+        crossword_items = mc.generate_crossword()
+        
+        def cell(row, column, char):
+            cell = tk.Entry(frame, font=self.font_size, width=5)
+            return cell
+
+        def fill_field(word, row, column):
+            print(word, row, column)
+            return
+
+        for word, coordinates in crossword_items.items():
+            #TODO find word translation in self.words
+            fill_field(word, *coordinates)
+        exit() 
         return
 
     def show_result(self):
