@@ -49,7 +49,7 @@ class Crossword():
         '''Write word to the field.
 
         '*' in a cell means you can't write a symbol to this cell
-        (start and end of word).
+        (start and end of a word).
 
         '''
         word_len = len(word)
@@ -58,13 +58,16 @@ class Crossword():
             if c0 + word_len > self.size_c:
                 raise TypeError('You are crossed field\'s bounds!')
 
+            # write '*' before the start of the word
             if c0 > 0:
                 self.field[r0][c0 - 1] = '*'
 
             for i in range(word_len):
                 self.field[r0][c0 + i] = word[i]
+                # add character to list of characters
                 self.chars[word[i]].add((r0, c0 + i))
 
+            # write '*' after the end of the word
             if c0 + i + 1 < self.size_c:
                 self.field[r0][c0 + i + 1] = '*'
 
@@ -72,13 +75,16 @@ class Crossword():
             if r0 + word_len > self.size_r:
                 raise TypeError('You are crossed field\'s bounds!')
 
+            # write '*' before the start of the word
             if r0 > 0:
                 self.field[r0 - 1][c0] = '*'
 
             for i in range(word_len):
                 self.field[r0 + i][c0] = word[i]
+                # add character to list of characters
                 self.chars[word[i]].add((r0 + i, c0))
 
+            # write '*' after the end of the word
             if r0 + i + 1 < self.size_r:
                 self.field[r0 + i + 1][c0] = '*'
         else:
@@ -99,7 +105,7 @@ class Crossword():
             if start_row < 0:
                 return False
 
-            # check if upper cell has no letters
+            # check is upper cell has no letters
             #1   <====
             #2  d
             #3brother
@@ -107,11 +113,12 @@ class Crossword():
             if (start_row - 1) >= 0 and self.field[start_row - 1][column_id]:
                 return False
 
-            # is cell after the last cell of the word has something in it?
+            # Does cell after the last cell of the word has smth in it?
             if (start_row + word_len) < self.size_r and\
                     self.field[start_row + word_len][column_id]:
                 return False
 
+            # check every cell and neighbour cells on contain letters
             for i in range(len(word)):
                 if i == char_pos:
                     # this is where words crossing each other
@@ -119,15 +126,16 @@ class Crossword():
 
                 current_row_id = start_row + i
 
-#TODO CHECK BOUNDS!!!
                 # right cell
-                if self.field[current_row_id][column_id + 1]:
+                if (column_id + 1) < self.size_c and\
+                        self.field[current_row_id][column_id + 1]:
                     return False
-                #current cell
+                # current cell
                 if self.field[current_row_id][column_id]:
                     return False
                 # left cell
-                elif self.field[current_row_id][column_id - 1]:
+                if (column_id - 1) >= 0 and\
+                        self.field[current_row_id][column_id - 1]:
                     return False
             return (start_row, column_id, 'column')
 
@@ -141,16 +149,17 @@ class Crossword():
             if start_column < 0:
                 return False
 
-            # does cell prior the first cell has something in it
+            # Does cell prior the first cell has smth in it
             if (start_column - 1) >= 0 and\
                     self.field[row_id][start_column - 1]:
                 return False
 
-            # check is cell after the last word cell has something in it
+            # Does cell after the last word cell has smth in it
             if (start_column + word_len) < self.size_c and\
                     self.field[row_id][start_column + word_len]:
                 return False
 
+            # check every cell and neighbour cells on contain letters
             for i in range(word_len):
                 if i == char_pos:
                     # this is where words crossing each other
@@ -159,13 +168,15 @@ class Crossword():
                 current_column_id = start_column + i
 
                 # upper cell
-                if self.field[row_id - 1][current_column_id]:
+                if (row_id - 1) >= 0 and\
+                        self.field[row_id - 1][current_column_id]:
                     return False
                 # current cell
                 if self.field[row_id][current_column_id]:
                     return False
                 # lower cell
-                elif self.field[row_id + 1][current_column_id]:
+                if (row_id + 1) < self.size_r and\
+                        self.field[row_id + 1][current_column_id]:
                     return False
             return (row_id, start_column, 'row')
 
