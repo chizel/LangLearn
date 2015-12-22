@@ -192,11 +192,11 @@ class Crossword():
                     res = check_row(word, char_pos, row_id, column_id)
                     if res:
                         self.write_word_to_field(word, *res)
-                        return (res[0], res[1])
+                        return res
                     res = check_column(word, char_pos, row_id, column_id)
                     if res:
                         self.write_word_to_field(word, *res)
-                        return (res[0], res[1])
+                        return res
         return False
 
     def generate_crossword(self):
@@ -216,8 +216,6 @@ class Crossword():
                 word_count += 1
             if word_count == 15:
                 break
-
-        
         return word_coordinates
 
 
