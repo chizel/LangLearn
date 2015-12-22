@@ -50,10 +50,11 @@ class Crossword():
         '*' in a cell means you can't write a symbol to this cell
         (start and end of a word).
 
+        Axis must be 'v' (vertical) or 'h' (horizontal).
         '''
         word_len = len(word)
 
-        if axis == 'row':
+        if axis == 'h':
             if c0 + word_len > self.size_c:
                 raise TypeError('You are crossed field\'s bounds!')
 
@@ -70,7 +71,7 @@ class Crossword():
             if c0 + i + 1 < self.size_c:
                 self.field[r0][c0 + i + 1] = '*'
 
-        elif axis == 'column':
+        elif axis == 'v':
             if r0 + word_len > self.size_r:
                 raise TypeError('You are crossed field\'s bounds!')
 
@@ -138,7 +139,7 @@ class Crossword():
                 if (column_id - 1) >= 0 and\
                         self.field[current_row_id][column_id - 1]:
                     return False
-            return (start_row, column_id, 'column')
+            return (start_row, column_id, 'v')
 
         def check_row(word, char_pos, row_id, column_id):
             word_len = len(word)
@@ -181,7 +182,7 @@ class Crossword():
                 if (row_id + 1) < self.size_r and\
                         self.field[row_id + 1][current_column_id]:
                     return False
-            return (row_id, start_column, 'row')
+            return (row_id, start_column, 'h')
 
         for char_pos in range(word_len):
             if self.chars[word[char_pos]]:
@@ -203,7 +204,7 @@ class Crossword():
         self.chars = {chr(a): set() for a in range(ord('a'), ord('z') + 1)}
 
         # placing init word
-        self.write_word_to_field(self.words[0], 3, 3, 'row')
+        self.write_word_to_field(self.words[0], 3, 3, 'h')
         word_count = 1
         word_coordinates = {}
         word_coordinates[self.words[0]] = (3, 3)
