@@ -7,6 +7,7 @@ import random
 import re
 from crossword import Crossword
 
+
 class LearnWords():
     def __init__(self, db_name='engwords.db'):
         self.db_name = db_name
@@ -367,19 +368,41 @@ class LearnWords():
 
         mc = Crossword(words, size_r=30, size_c=30)
         crossword_items = mc.generate_crossword()
-        
+
         def cell(row, column, char):
             cell = tk.Entry(frame, font=self.font_size, width=5)
             return cell
 
-        def fill_field(word, row, column):
-            print(word, row, column)
+        def fill_field(word, row, column, direction):
+            start = (row, column)
+            word_len = len(word)
+
+            if direction == 'h':
+                end = (row + word_len, column)
+            elif direction == 'v':
+                end = (row + word_len, column)
+            else:
+                raise TypeError('Wrong axis argument! Must be "h" or "v"!')
+
+            #TODO how to iterate through letters in word
+            #and place it in right direction?
+
+            print(word, row, column, direction )
+
+            #TODO REMOVE
+            exit()
             return
 
+        translation = []
+
         for word, coordinates in crossword_items.items():
-            #TODO find word translation in self.words
-            fill_field(word, *coordinates)
-        exit() 
+            #fill_field(word, *coordinates)
+            # find word translation
+            tmp_tr = next((x[1] for x in self.words if x[0] == word))
+            print(word, tmp_tr)
+            translation.append(tmp_tr)
+        #TODO REMOVE
+        exit()
         return
 
     def show_result(self):

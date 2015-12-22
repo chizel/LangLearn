@@ -42,7 +42,6 @@ class Crossword():
 
     def sort_words_by_length(self, words):
         return sorted(words, key=len, reverse=True)
-        
 
     def write_word_to_field(self, word, r0, c0, axis):
         '''Write word to the field.
@@ -88,7 +87,7 @@ class Crossword():
             if r0 + i + 1 < self.size_r:
                 self.field[r0 + i + 1][c0] = '*'
         else:
-            raise TypeError('Wrong axis argument! Must be "row" or "column"!')
+            raise TypeError('Wrong axis argument! Must be "h" or "v"!')
         return
 
     def place_word(self, word):
@@ -207,7 +206,7 @@ class Crossword():
         self.write_word_to_field(self.words[0], 3, 3, 'h')
         word_count = 1
         word_coordinates = {}
-        word_coordinates[self.words[0]] = (3, 3)
+        word_coordinates[self.words[0]] = (3, 3, 'h')
 
         for word in self.words[1:]:
             coord = self.place_word(word)
