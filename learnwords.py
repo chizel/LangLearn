@@ -59,10 +59,10 @@ class LearnWords():
         self.root = tk.Tk()
         self.font_size = font_size
 
-        self.min_x = 800
-        self.min_y = 500
-        max_x = 800
-        max_y = 500
+        self.min_x = 1000
+        self.min_y = 700
+        max_x = 1300
+        max_y = 1200
         self.root.minsize(self.min_x, self.min_y)
         self.root.maxsize(max_x, max_y)
 
@@ -123,8 +123,8 @@ class LearnWords():
 
         self.root.title('Guess word translation')
         frame = tk.Frame(self.main_frame,
-                         width=800,
-                         height=500,
+                         width=1000,
+                         height=700,
                          bd=5,
                          relief=tk.RIDGE,
                          )
@@ -212,8 +212,8 @@ class LearnWords():
         self.read_words(word_count)
         self.root.title('Spell words')
         frame = tk.Frame(self.main_frame,
-                         width=800,
-                         height=500,
+                         width=1000,
+                         height=700,
                          bd=5,
                          relief=tk.RIDGE,
                          )
@@ -350,16 +350,99 @@ class LearnWords():
         return
 
     def crossword(self, word_count=15):
+        # 0 - horizontal, 1 - vertical
+        self.move = 0
+
+        def cell(row, column, char):
+            field[row][column] = tk.Entry(
+                frame,
+                font=self.font_size,
+                width=2,
+                justify=tk.CENTER
+                )
+            field[row][column].grid(row=row, column=column)
+            field[row][column].bind('<Key>',
+                                    lambda e: validate(e, row, column))
+            # TODO another function?
+            field[row][column].bind('<Button>',
+                                    lambda e: validate(e, row, column))
+            return
+
+        def fill_field(word, row, column, direction):
+            start = (row, column)
+            word_len = len(word)
+
+            if direction == 'h':
+                for i in range(word_len):
+                    cell(row, column + i, word[i])
+            elif direction == 'v':
+                for i in range(word_len):
+                    cell(row + i, column, word[i])
+            else:
+                raise TypeError('Wrong axis argument! Must be "h" or "v"!')
+            return
+
+        def activate_cell(row, column, direction):
+            if direction == 'h':
+                self.move = 0
+            else:
+                self.move = 1
+            field[row][column].focus()
+
+        #TODO fix it? is it bug or feature?
+        #if someone inserted text(Control+v or middle-mouse)
+        #it will be shown even if it contains several character
+        #TODO backspace must return to previous cell
+        def validate(e, row, column, direction=None):
+            key_char = e.char.lower()
+            # is it character key was pressed?
+            if len(key_char) == 1 and ord('a') <= ord(key_char) <= ord('z'):
+                field[row][column].delete(0, 'end')
+
+                # move vertical
+                if self.move:
+                    if field[row + 1][column]:
+                        field[row + 1][column].focus()
+                #move horizontal
+                else:
+                    if field[row][column + 1]:
+                        field[row][column + 1].focus()
+            # moving to other cells
+            elif e.keysym == 'Left':
+                if field[row][column - 1]:
+                    field[row][column - 1].focus()
+                    self.move = 0
+            elif e.keysym == 'Right':
+                if field[row][column + 1]:
+                    field[row][column + 1].focus()
+                    self.move = 0
+            elif e.keysym == 'Up':
+                if field[row - 1][column]:
+                    field[row - 1][column].focus()
+                    self.move = 1
+            elif e.keysym == 'Down':
+                if field[row + 1][column]:
+                    field[row + 1][column].focus()
+                    self.move = 1
+            elif e.num:
+                if field[row + 1][column] or field[row - 1][column]:
+                    self.move = 1
+                else:
+                    self.move = 0
+
         self.init_main_frame(sx=self.min_x,
                              sy=self.min_y
                              )
         self.read_words(random=True, limit=word_count)
         frame = tk.Frame(self.main_frame,
-                         width=800,
-                         height=500,
+                         width=1000,
+                         height=700,
                          bd=5,
                          relief=tk.RIDGE,
+                         bg='orange'
                          )
+        #TODO SET PROPER SIZE
+        frame.place(x=180, y=0)
         words = []
 
         for word in self.words:
@@ -369,40 +452,57 @@ class LearnWords():
         mc = Crossword(words, size_r=30, size_c=30)
         crossword_items = mc.generate_crossword()
 
-        def cell(row, column, char):
-            cell = tk.Entry(frame, font=self.font_size, width=5)
-            return cell
+        #TODO REMOVW
+        #TEST
+        #crossword_items = {
+            #'hello': (3, 3, 'h'),
+            #'best': (2, 4, 'v'),
+        #    }
+        #TODO END
 
-        def fill_field(word, row, column, direction):
-            start = (row, column)
-            word_len = len(word)
+        # view translations
+        transl_frm = tk.Frame(self.main_frame)
+        transl_frm.place(x=0, y=0)
+        transl_lbls = {}
 
-            if direction == 'h':
-                end = (row + word_len, column)
-            elif direction == 'v':
-                end = (row + word_len, column)
-            else:
-                raise TypeError('Wrong axis argument! Must be "h" or "v"!')
+        translations = {}
 
-            #TODO how to iterate through letters in word
-            #and place it in right direction?
+        field = []
+        li = ['' for _ in range(30)]
 
-            print(word, row, column, direction )
+        for i in range(30):
+            field.append(li[:])
 
-            #TODO REMOVE
-            exit()
-            return
-
-        translation = []
+        i = 0
 
         for word, coordinates in crossword_items.items():
-            #fill_field(word, *coordinates)
+            fill_field(word, *coordinates)
+
+            r = coordinates[0]
+            c = coordinates[1]
+            direction = coordinates[2]
+
             # find word translation
-            tmp_tr = next((x[1] for x in self.words if x[0] == word))
-            print(word, tmp_tr)
-            translation.append(tmp_tr)
-        #TODO REMOVE
-        exit()
+            for tmp_word, tmp_translation in self.words:
+                if word == tmp_word:
+                    translations[word] = tmp_translation
+                    break
+
+            transl_lbls[word] = tk.Label(
+                transl_frm,
+                text=translations[word],
+                bd=2,
+                relief=tk.RIDGE,
+                wraplength=150,
+                justify=tk.CENTER
+                )
+            transl_lbls[word].grid(row=i, column=0)
+            transl_lbls[word].bind(
+                '<Button-1>',
+                lambda e, d=direction, r=r, c=c: activate_cell(r, c, d)
+                )
+            i += 1
+        frame.focus()
         return
 
     def show_result(self):
