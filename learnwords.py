@@ -362,10 +362,10 @@ class LearnWords():
                 )
             field[row][column].grid(row=row, column=column)
             field[row][column].bind('<Key>',
-                                    lambda e: validate(e, row, column))
+                                    lambda e: check_key(e, row, column))
             # TODO another function?
             field[row][column].bind('<Button>',
-                                    lambda e: validate(e, row, column))
+                                    lambda e: check_key(e, row, column))
             return
 
         def fill_field(word, row, column, direction):
@@ -393,8 +393,9 @@ class LearnWords():
         #if someone inserted text(Control+v or middle-mouse)
         #it will be shown even if it contains several character
         #TODO backspace must return to previous cell
-        def validate(e, row, column, direction=None):
+        def check_key(e, row, column, direction=None):
             key_char = e.char.lower()
+
             # is it character key was pressed?
             if len(key_char) == 1 and ord('a') <= ord(key_char) <= ord('z'):
                 field[row][column].delete(0, 'end')
@@ -424,6 +425,17 @@ class LearnWords():
                 if field[row + 1][column]:
                     field[row + 1][column].focus()
                     self.move = 1
+            elif e.keysym == 'BackSpace':
+                if field[row][column]:
+                    field[row][column].delete(0, 'end')
+
+                if self.move:
+                    if field[row - 1][column]:
+                        field[row - 1][column].focus()
+                else:
+                    if field[row][column - 1]:
+                        field[row][column - 1].focus()
+            # mouse click
             elif e.num:
                 if field[row + 1][column] or field[row - 1][column]:
                     self.move = 1
