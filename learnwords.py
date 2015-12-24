@@ -13,6 +13,14 @@ class LearnWords():
         self.db_name = db_name
         # [number of right answers, all answers count]
         self.result = [0, 0]
+        # default background color
+        self.bg_color = '#F8DCB1'
+        # a little bit darker than bg_color
+        self.bg_darkest = '#E9B96E'
+        # color of elemnet if answer is right
+        self.color_ok = '#8AE234'
+        # color of elemnet if answer is wrong
+        self.color_no = '#F34949'
 
     def read_words(self, random=True, limit=10):
         # TODO decide where to place this code
@@ -49,7 +57,12 @@ class LearnWords():
     def init_main_frame(self, sx=0, sy=0, px=0, py=0):
         '''Frame where all other frames placed.
         To clear this main_frame just call this function'''
-        self.main_frame = tk.Frame(self.root, width=sx, height=sy)
+        self.main_frame = tk.Frame(
+            self.root,
+            width=sx,
+            height=sy,
+            bg=self.bg_color
+            )
         self.main_frame.place(x=px, y=py)
         return
 
@@ -282,7 +295,6 @@ class LearnWords():
 
         self.root.title(window_title)
 
-        # TODO frame's size not wotking!!!
         frame = tk.Frame(self.main_frame,
                          width=700,
                          height=400,
@@ -353,17 +365,23 @@ class LearnWords():
         # 0 - horizontal, 1 - vertical
         self.move = 0
 
-        def cell(row, column, char):
-            field[row][column] = tk.Entry(
+        class crossword_cell(tk.Entry):
+            def __init__(self, *args, def_char, **kwargs):
+                self.def_char = def_char
+                super(crossword_cell, self).__init__(*args, **kwargs)
+
+        def create_cell(row, column, char):
+            field[row][column] = crossword_cell(
                 frame,
                 font=self.font_size,
                 width=2,
-                justify=tk.CENTER
+                justify=tk.CENTER,
+                bg=self.bg_darkest,
+                def_char=char
                 )
             field[row][column].grid(row=row, column=column)
             field[row][column].bind('<Key>',
                                     lambda e: check_key(e, row, column))
-            # TODO another function?
             field[row][column].bind('<Button>',
                                     lambda e: check_key(e, row, column))
             return
@@ -374,10 +392,10 @@ class LearnWords():
 
             if direction == 'h':
                 for i in range(word_len):
-                    cell(row, column + i, word[i])
+                    create_cell(row, column + i, word[i])
             elif direction == 'v':
                 for i in range(word_len):
-                    cell(row + i, column, word[i])
+                    create_cell(row + i, column, word[i])
             else:
                 raise TypeError('Wrong axis argument! Must be "h" or "v"!')
             return
@@ -392,7 +410,6 @@ class LearnWords():
         #TODO fix it? is it bug or feature?
         #if someone inserted text(Control+v or middle-mouse)
         #it will be shown even if it contains several character
-        #TODO backspace must return to previous cell
         def check_key(e, row, column, direction=None):
             key_char = e.char.lower()
 
@@ -426,9 +443,11 @@ class LearnWords():
                     field[row + 1][column].focus()
                     self.move = 1
             elif e.keysym == 'BackSpace':
+                # clear current cell
                 if field[row][column]:
                     field[row][column].delete(0, 'end')
 
+                # moving to previous cell
                 if self.move:
                     if field[row - 1][column]:
                         field[row - 1][column].focus()
@@ -436,23 +455,48 @@ class LearnWords():
                     if field[row][column - 1]:
                         field[row][column - 1].focus()
             # mouse click
-            elif e.num:
+            elif e.num == 1:
+#TODO highlight word translation
                 if field[row + 1][column] or field[row - 1][column]:
                     self.move = 1
                 else:
                     self.move = 0
+            return
+
+        def check_crossword():
+            for row in field:
+                for cell in row:
+                    if not cell:
+                        continue
+                    answer = cell.get()
+                    if cell.def_char == answer:
+                        cell.configure(bg=self.color_ok)
+                    elif answer != '':
+                        cell.configure(bg=self.color_no)
+            return
+
+        def reset_cells_bg():
+            for row in field:
+                for cell in row:
+                    if cell:
+                        cell.configure(bg=self.bg_darkest)
+            return
+
+        #TODO add functionality
+        def check_answer():
+            return
 
         self.init_main_frame(sx=self.min_x,
                              sy=self.min_y
                              )
         self.read_words(random=True, limit=word_count)
-        frame = tk.Frame(self.main_frame,
-                         width=1000,
-                         height=700,
-                         bd=5,
-                         relief=tk.RIDGE,
-                         bg='orange'
-                         )
+        frame = tk.Frame(
+            self.main_frame,
+            width=1000,
+            height=700,
+            bg=self.bg_color
+            )
+
         #TODO SET PROPER SIZE
         frame.place(x=180, y=0)
         words = []
@@ -464,16 +508,8 @@ class LearnWords():
         mc = Crossword(words, size_r=30, size_c=30)
         crossword_items = mc.generate_crossword()
 
-        #TODO REMOVW
-        #TEST
-        #crossword_items = {
-            #'hello': (3, 3, 'h'),
-            #'best': (2, 4, 'v'),
-        #    }
-        #TODO END
-
         # view translations
-        transl_frm = tk.Frame(self.main_frame)
+        transl_frm = tk.Frame(self.main_frame, bg=self.bg_color)
         transl_frm.place(x=0, y=0)
         transl_lbls = {}
 
@@ -514,6 +550,18 @@ class LearnWords():
                 lambda e, d=direction, r=r, c=c: activate_cell(r, c, d)
                 )
             i += 1
+        answer_btn = tk.Button(
+            transl_frm,
+            text='Answer',
+            width=10,
+            command=check_answer)
+        answer_btn.grid()
+        check_btn = tk.Button(
+            transl_frm,
+            text='Check',
+            width=10,
+            command=check_crossword)
+        check_btn.grid()
         frame.focus()
         return
 
