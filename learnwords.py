@@ -30,9 +30,10 @@ class LearnWords():
         #            self.config.write(configfile)
         return
 
-    def read_words(self, random=True, limit=10):
+    def read_words(self, limit=10, random=True):
         # TODO decide where to place this code
         # for random answers
+        limit = int(limit)
         limit *= 2
         conn = sqlite3.connect(self.db_name)
         c = conn.cursor()
@@ -133,11 +134,11 @@ class LearnWords():
         self.root.mainloop()
         return
 
-    def guess_word_translation(self, word_count=10):
+    def guess_word_translation(self):
         '''You're given word-translation and you need to guess to what
         word from 2 given words it benongs'''
         self.init_main_frame()
-        self.read_words(random=True, limit=word_count)
+        self.read_words(limit=self.config['app']['items'])
 
         self.root.title('Guess word translation')
         frame = tk.Frame(self.main_frame,
@@ -146,7 +147,7 @@ class LearnWords():
                          bd=5,
                          relief=tk.RIDGE,
                          )
-        frame.place(x=100, y=100)
+        frame.place(x=200, y=100)
         word_lbl = tk.Label(frame,
                             font=self.config['gui']['font_size'],
                             text='Press enter to start',
@@ -193,8 +194,8 @@ class LearnWords():
                        lambda e: check_answer(right_lbl.cget('text')))
             frame.bind('<Left>', lambda e: check_answer(left_lbl.cget('text')))
             self.result[0] = 0
-            self.result[1] = word_count
-            # current word position in words list
+            self.result[1] = self.config['app']['items']
+            # current word position in the words list
             self.pos = 0
             fill_lbl()
 
@@ -204,12 +205,14 @@ class LearnWords():
 
             if answer == word[0]:
                 result_lbl.config(text='Right!')
+                result_lbl.config(bg=self.config['colors']['right'])
                 self.result[0] += 1
             else:
                 result_lbl.config(text='Wrong!')
+                result_lbl.config(bg=self.config['colors']['wrong'])
 
             self.pos += 1
-            if self.pos >= word_count:
+            if self.pos >= self.config['app']['items']:
                 frame.destroy()
                 # send result to main gui
                 self.show_result()
@@ -218,24 +221,23 @@ class LearnWords():
 
         frame.bind('<Return>', lambda e: init())
         word_lbl.grid(row=0, column=1)
-        word_lbl.configure(background='orange')
         result_lbl.grid(row=1, column=1)
         frame.focus()
         return
 
-    def spell_word(self, word_count=10):
+    def spell_word(self):
         '''You're given a word translation. You need to spell word from
         memory'''
         self.init_main_frame()
-        self.read_words(word_count)
+        self.read_words(limit=self.config['app']['items'])
         self.root.title('Spell words')
         frame = tk.Frame(self.main_frame,
-                         width=1000,
-                         height=700,
+                         width=self.config['gui']['min_w'],
+                         height=self.config['gui']['min_h'],
                          bd=5,
                          relief=tk.RIDGE,
                          )
-        frame.place(x=100, y=100)
+        frame.place(x=200, y=100)
         self.pos = 0
 
         # label with result
@@ -245,11 +247,12 @@ class LearnWords():
         result_lbl.pack()
         answer_ent = tk.Entry(frame,
                               font=self.config['gui']['font_size'],
-                              width=50)
+                              width=50,
+                              justify=tk.CENTER)
         answer_ent.focus()
         answer_ent.pack()
         self.result[0] = 0
-        self.result[1] = word_count
+        self.result[1] = self.config['app']['items']
 
         def check_answer():
             '''Answer checking'''
@@ -258,13 +261,15 @@ class LearnWords():
 
             if answer == self.words[self.pos][0]:
                 result_lbl.config(text='Right!')
+                result_lbl.config(bg=self.config['colors']['right'])
                 self.result[0] += 1
             else:
-                tmp_msg = answer + ' not ' + self.words[self.pos][0]
+                tmp_msg = 'Right answer: ' + self.words[self.pos][0]
                 result_lbl.config(text=tmp_msg)
+                result_lbl.config(bg=self.config['colors']['wrong'])
 
             self.pos += 1
-            if self.pos >= word_count:
+            if self.pos >= self.config['app']['items']:
                 frame.destroy()
                 # send result to main gui
                 self.show_result()
@@ -273,7 +278,8 @@ class LearnWords():
 
         word_lbl = tk.Label(frame,
                             font=self.config['gui']['font_size'],
-                            text=self.words[self.pos][1])
+                            text=self.words[self.pos][1],
+                            wraplength=350)
         word_lbl.pack()
         answer_ent.bind('<Return>', lambda e: check_answer())
         answer_btn = tk.Button(frame,
@@ -283,10 +289,10 @@ class LearnWords():
         answer_btn.pack()
         return
 
-    def word_translation(self, word_count=10, display=0):
+    def word_translation(self, display=0):
         # TODO add informative docstring
         self.init_main_frame()
-        self.read_words(random=True, limit=word_count)
+        self.read_words(limit=self.config['app']['items'])
         self.pos = 0
 
         if display == 0:
@@ -338,7 +344,7 @@ class LearnWords():
                 lbls[i].bind('<Button-1>', tmp_f)
                 frame.bind(str(i + 1), tmp_f)
             self.result[0] = 0
-            self.result[1] = word_count
+            self.result[1] = self.config['app']['items']
             self.pos = 0
             fill_lbl()
 
@@ -352,7 +358,7 @@ class LearnWords():
                 result_lbl.config(text=msg)
 
             self.pos += 1
-            if self.pos >= word_count:
+            if self.pos >= self.config['app']['items']:
                 frame.destroy()
                 # send result to main gui
                 self.show_result()
@@ -367,11 +373,13 @@ class LearnWords():
         frame.focus()
         return
 
-    def crossword(self, word_count=15):
-        # 0 - horizontal, 1 - vertical
-        self.move = 0
+    def crossword(self):
+        # h - horizontal, v - vertical
+        self.move = 'h'
 
         class crossword_cell(tk.Entry):
+            '''custom class from tk.Entry that contains additional
+            variable for checking default value of a cell'''
             def __init__(self, *args, def_char, **kwargs):
                 self.def_char = def_char
                 super(crossword_cell, self).__init__(*args, **kwargs)
@@ -379,9 +387,9 @@ class LearnWords():
         def create_cell(row, column, char):
             field[row][column] = crossword_cell(
                 frame,
-                font=self.config['gui']['font_size'],
                 width=2,
                 justify=tk.CENTER,
+                font=self.config['gui']['font_size'],
                 bg=self.config['colors']['bg_darker'],
                 def_char=char
                 )
@@ -393,24 +401,18 @@ class LearnWords():
             return
 
         def fill_field(word, row, column, direction):
-            start = (row, column)
-            word_len = len(word)
-
             if direction == 'h':
-                for i in range(word_len):
+                for i in range(len(word)):
                     create_cell(row, column + i, word[i])
             elif direction == 'v':
-                for i in range(word_len):
+                for i in range(len(word)):
                     create_cell(row + i, column, word[i])
             else:
                 raise TypeError('Wrong axis argument! Must be "h" or "v"!')
             return
 
         def activate_cell(row, column, direction):
-            if direction == 'h':
-                self.move = 0
-            else:
-                self.move = 1
+            self.move = direction
             field[row][column].focus()
 
         #TODO fix it? is it bug or feature?
@@ -424,7 +426,7 @@ class LearnWords():
                 field[row][column].delete(0, 'end')
 
                 # move vertical
-                if self.move:
+                if self.move == 'v':
                     if field[row + 1][column]:
                         field[row + 1][column].focus()
                 #move horizontal
@@ -435,26 +437,26 @@ class LearnWords():
             elif e.keysym == 'Left':
                 if field[row][column - 1]:
                     field[row][column - 1].focus()
-                    self.move = 0
+                    self.move = 'h'
             elif e.keysym == 'Right':
                 if field[row][column + 1]:
                     field[row][column + 1].focus()
-                    self.move = 0
+                    self.move = 'h'
             elif e.keysym == 'Up':
                 if field[row - 1][column]:
                     field[row - 1][column].focus()
-                    self.move = 1
+                    self.move = 'v'
             elif e.keysym == 'Down':
                 if field[row + 1][column]:
                     field[row + 1][column].focus()
-                    self.move = 1
+                    self.move = 'v'
             elif e.keysym == 'BackSpace':
                 # clear current cell
                 if field[row][column]:
                     field[row][column].delete(0, 'end')
 
                 # moving to previous cell
-                if self.move:
+                if self.move == 'v':
                     if field[row - 1][column]:
                         field[row - 1][column].focus()
                 else:
@@ -466,9 +468,9 @@ class LearnWords():
 # I need to find to what word relate current cell
 # but how?
                 if field[row + 1][column] or field[row - 1][column]:
-                    self.move = 1
+                    self.move = 'v'
                 else:
-                    self.move = 0
+                    self.move = 'h'
             return
 
         def check_crossword():
@@ -495,7 +497,7 @@ class LearnWords():
             return
 
         self.init_main_frame()
-        self.read_words(random=True, limit=word_count)
+        self.read_words(limit=self.config['app']['items'])
         frame = tk.Frame(
             self.main_frame,
             width=1000,
