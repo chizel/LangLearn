@@ -12,24 +12,28 @@ class Crossword():
         # number of columns
         self.size_c = size_c
 
+        # is words contains only [a-z]
         self.check_words()
-        self.__init_field__()
+        # generating empty field
+        self.__init_field__(self.size_r, self.size_c)
         return
 
     def check_words(self):
+        '''Checking words for containing only [a-z] characters'''
         for word in self.words:
             if not re.match('^[a-z]+$', word):
                 raise TypeError(word + ' contains wrong characters!')
 
-    def __init_field__(self):
-        '''generate empty crossword field by size size_r, size_c'''
+    def __init_field__(self, width, height):
+        '''Generate empty crossword field by size size_r, size_c'''
         self.field = []
-        li = ['' for _ in range(self.size_c)]
-        for i in range(self.size_r):
+        li = ['' for _ in range(width)]
+        for i in range(height):
             self.field.append(li[:])
         return
 
     def print_field(self):
+        '''Print field. Not used cells will be printed as '*'.'''
         for line in self.field:
             s = ''
             for cell in line:
@@ -41,16 +45,17 @@ class Crossword():
         return
 
     def sort_words_by_length(self, words):
+        '''Sort words by length.
+        The longest word will be first, the shortest - last'''
         return sorted(words, key=len, reverse=True)
 
     def write_word_to_field(self, word, r0, c0, axis):
         '''Write word to the field.
 
-        '*' in a cell means you can't write a symbol to this cell
+        '*' in a cell means you can't write to this cell
         (start and end of a word).
 
-        Axis must be 'v' (vertical) or 'h' (horizontal).
-        '''
+        Axis must be 'v' (vertical) or 'h' (horizontal).'''
         word_len = len(word)
 
         if axis == 'h':
@@ -63,7 +68,7 @@ class Crossword():
 
             for i in range(word_len):
                 self.field[r0][c0 + i] = word[i]
-                # add character to list of characters
+                # add character to the list of characters
                 self.chars[word[i]].add((r0, c0 + i))
 
             # write '*' after the end of the word
@@ -80,7 +85,7 @@ class Crossword():
 
             for i in range(word_len):
                 self.field[r0 + i][c0] = word[i]
-                # add character to list of characters
+                # add character to the list of characters
                 self.chars[word[i]].add((r0 + i, c0))
 
             # write '*' after the end of the word
@@ -91,13 +96,17 @@ class Crossword():
         return
 
     def place_word(self, word):
+        '''Try to place word to the field.
+        If word can't be placed - it ignored.'''
         word_len = len(word)
 
-        def check_column(word, char_pos, row_id, column_id):
-            # row index where first word's letter will be placed
-            #1  d<====
-            #2brother
-            #3  g
+        def check_horizontal(word, char_pos, row_id, column_id):
+            '''start_row is a row index where first word's
+            letter will be placed. Ecample:
+            1  d<====
+            2brother
+            3  g
+            '''
             start_row = row_id - char_pos
 
             # Does word will cross field's borders
@@ -111,6 +120,8 @@ class Crossword():
             #2  d
             #3brother
             #4  g
+            #TODO: * characters counts as a word symbol, but it ok to be
+            # before word
             if (start_row - 1) >= 0 and self.field[start_row - 1][column_id]:
                 return False
 
@@ -119,10 +130,10 @@ class Crossword():
                     self.field[start_row + word_len][column_id]:
                 return False
 
-            # check every cell and neighbour cells on contain letters
+            # check every cell and neighbour cells on containing letters
             for i in range(len(word)):
                 if i == char_pos:
-                    # this is where words crossing each other
+                    # this is where words crossing each other, skip it
                     continue
 
                 current_row_id = start_row + i
@@ -140,7 +151,7 @@ class Crossword():
                     return False
             return (start_row, column_id, 'v')
 
-        def check_row(word, char_pos, row_id, column_id):
+        def check_vertical(word, char_pos, row_id, column_id):
             word_len = len(word)
 
             # column index where first word's letter will be placed
@@ -152,11 +163,13 @@ class Crossword():
             elif start_column + word_len >= self.size_c:
                 return False
 
+            #TODO: * characters counts as a word symbol, but it ok to be there
             # Does cell prior the first cell has smth in it
             if (start_column - 1) >= 0 and\
                     self.field[row_id][start_column - 1]:
                 return False
 
+            #TODO: * characters counts as a word symbol, but it ok to be there
             # Does cell after the last word cell has smth in it
             if (start_column + word_len) < self.size_c and\
                     self.field[row_id][start_column + word_len]:
@@ -189,11 +202,11 @@ class Crossword():
                 coordinates = self.chars[word[char_pos]]
 
                 for row_id, column_id in coordinates:
-                    res = check_row(word, char_pos, row_id, column_id)
+                    res = check_vertical(word, char_pos, row_id, column_id)
                     if res:
                         self.write_word_to_field(word, *res)
                         return res
-                    res = check_column(word, char_pos, row_id, column_id)
+                    res = check_horizontal(word, char_pos, row_id, column_id)
                     if res:
                         self.write_word_to_field(word, *res)
                         return res
