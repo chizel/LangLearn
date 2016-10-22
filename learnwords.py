@@ -13,13 +13,17 @@ from crossword import Crossword
 class LearnWords():
     def __init__(self, db_name='engwords.db'):
         self.db_name = db_name
-        # [number of right answers, all answers that was counted]
+        # [number of correct answers, number of all answers]
         self.result = [0, 0]
         self.load_settings()
         # score for current quiz
         self.tmp_result = 0
         #TODO add users and change user_id to input from settings
         self.user_id = 1
+
+        #connecting to db
+        self.db_connect = sqlite3.connect(self.db_name)
+        self.cursor = self.db_connect.cursor()
         self.read_score()
 
     def load_settings(self):
@@ -35,16 +39,13 @@ class LearnWords():
         #            self.config.write(configfile)
 
     def read_score(self):
-        conn = sqlite3.connect(self.db_name)
-        c = conn.cursor()
-
+        '''Reading user's score from db'''
         query = '''SELECT score
                     FROM users
                     WHERE id = ?'''
 
-        c.execute(query, str(self.user_id))
-        self.score = int(c.fetchone()[0])
-        conn.close()
+        self.cursor.execute(query, str(self.user_id))
+        self.score = int(self.cursor.fetchone()[0])
 
     def update_score(self, score, answers_count):
         '''Update score (number of right answers) and answers_count
@@ -52,25 +53,19 @@ class LearnWords():
         self.score += score
 
         # writing to db
-        conn = sqlite3.connect(self.db_name)
-        c = conn.cursor()
-
         query = '''UPDATE users
                 SET score=?, answers_count=?
                     WHERE id=?;'''
 
-        c.execute(query, (score, answers_count, self.user_id))
-        self.words = c.fetchall()
-        conn.commit()
-        conn.close()
+        self.cursor.execute(query, (score, answers_count, self.user_id))
+        self.db_connect.commit()
 
     def read_words(self, limit=10, random=True):
+        '''Reading words from db'''
         limit = int(limit)
         #TODO maybe remove
         # for random answers
         limit *= 2
-        conn = sqlite3.connect(self.db_name)
-        c = conn.cursor()
         query = 'SELECT word, translation FROM "words" '
         query += 'WHERE length(word) < 15 '
 
@@ -80,10 +75,8 @@ class LearnWords():
             query += 'LIMIT %d' % limit
 
         query += ';'
-        c.execute(query)
-        self.words = c.fetchall()
-        conn.close()
-        return
+        self.cursor.execute(query)
+        self.words = self.cursor.fetchall()
 
     def get_random_items(self, items, items_count, include):
         '''Returns random items from 'items' in quntaty 'items_count'
@@ -105,11 +98,12 @@ class LearnWords():
             height=self.config['gui']['min_h'],
             bg=self.config['colors']['bg']
             )
-        self.main_frame.place(x=0, y=0)
-        text = 'Score: %d' % self.score
-        score_lbl = tk.Label(text=text)
+        self.main_frame.place(x=0, y=20)
+        text = 'Your score: %d' % self.score
+        score_lbl = tk.Label(self.root, text=text)
         # TODO place it in right position
-        score_lbl.pack()
+        score_lbl.place(x=0, y=0)
+        #score_lbl.pack()
         return
 
     def init_gui(self):
@@ -533,7 +527,7 @@ class LearnWords():
 
             right_answers = 0
 
-            for word in  crossword_items:
+            for word in crossword_items:
                 row, column, pos = crossword_items[word]
                 len_word = len(word)
                 if pos == 'v':
@@ -673,7 +667,8 @@ class LearnWords():
 def main():
     lw = LearnWords()
     lw.init_gui()
-    return
+    # closing db connection
+    lw.db_connect.close()
 
 
 if __name__ == '__main__':
