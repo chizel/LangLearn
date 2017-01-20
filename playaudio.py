@@ -14,7 +14,6 @@ def playaudio(word, library, ext='.wav', platform='linux'):
     for w in words:
         tmp = os.path.join(library, w[0], w + ext)
         if not os.path.exists(tmp):
-            print('nope ', tmp)
             return
         files.append(tmp)
     params = ['play', '-q']

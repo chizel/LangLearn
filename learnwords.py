@@ -156,10 +156,10 @@ class LearnWords():
             command=self.guess_word_translation)
         task_menu.add_command(
             label='Translation-word',
-            command=lambda: self.word_translation(display=1))
+            command=self.word_translation)
         task_menu.add_command(
             label='Word-translation',
-            command=self.word_translation)
+            command=lambda: self.word_translation(wt=1))
 
         help_menu = tk.Menu(menu_bar, tearoff=0)
         menu_bar.add_cascade(label='Help', menu=help_menu)
@@ -333,19 +333,17 @@ class LearnWords():
         answer_btn.pack()
         return
 
-    def word_translation(self, display=0):
+    def word_translation(self, wt=0):
         # TODO add informative docstring
         self.init_main_frame()
         self.read_words(limit=self.config['app']['items'])
         self.pos = 0
         self.tmp_result = 0
 
-        if display == 0:
-            word_guess = 1
-            gui_title = 'Translation-word'
-        else:
-            word_guess = 0
+        if wt:
             gui_title = 'Word-translation'
+        else:
+            gui_title = 'Translation-word'
 
         self.root.title(gui_title)
 
@@ -376,10 +374,14 @@ class LearnWords():
 
         def fill_lbl():
             word = self.words[self.pos]
-            word_lbl.configure(text=word[display])
+
+            if wt:
+                self.play_audio(word[0])
+
+            word_lbl.configure(text=word[abs(wt - 1)])
             guesses = self.get_random_items(self.words, 4, self.pos)
             for i in range(4):
-                str_lbls[i].set(guesses[i][word_guess])
+                str_lbls[i].set(guesses[i][wt])
 
         def init():
             frame.bind('<Return>', lambda e: 1)
@@ -392,8 +394,11 @@ class LearnWords():
             fill_lbl()
 
         def check_answer(lbl_id):
-            right_answer = self.words[self.pos][word_guess]
-            self.play_audio(right_answer)
+            right_answer = self.words[self.pos][wt]
+
+            if not wt:
+                self.play_audio(right_answer)
+
             if str_lbls[lbl_id].get() == right_answer:
                 result_lbl.config(text='Right!')
                 result_lbl.config(bg=self.config['colors']['right'])
