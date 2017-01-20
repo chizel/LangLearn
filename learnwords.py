@@ -8,6 +8,7 @@ import configparser
 import tkinter as tk
 
 from crossword import Crossword
+from playaudio import playaudio
 
 
 class LearnWords():
@@ -37,6 +38,18 @@ class LearnWords():
         #TODO add window with settings and write them to file
         #        with open('settings.ini', 'w') as configfile:
         #            self.config.write(configfile)
+
+    def play_audio(self, word):
+        '''Plays audio if necessary'''
+        if not self.config['audio']['play_audio']:
+            return
+
+        playaudio(
+            word,
+            self.config['audio']['library'],
+            self.config['audio']['format'],
+            self.config['audio']['platform']
+            )
 
     def read_score(self):
         '''Reading user's score from db'''
@@ -233,6 +246,8 @@ class LearnWords():
         def check_answer(answer):
             '''checks given answer'''
             word = self.words[self.pos]
+            self.play_audio(word[0])
+
             if answer == word[0]:
                 result_lbl.config(text='Right!')
                 result_lbl.config(bg=self.config['colors']['right'])
@@ -286,13 +301,15 @@ class LearnWords():
             '''Answer checking'''
             answer = answer_ent.get()
             answer_ent.delete(0, 'end')
+            right_answer = self.words[self.pos][0]
+            self.play_audio(right_answer)
 
-            if answer == self.words[self.pos][0]:
+            if answer == right_answer:
                 result_lbl.config(text='Right!')
                 result_lbl.config(bg=self.config['colors']['right'])
                 self.tmp_result += 1
             else:
-                tmp_msg = 'Right answer: ' + self.words[self.pos][0]
+                tmp_msg = 'Right answer: ' + right_answer
                 result_lbl.config(text=tmp_msg)
                 result_lbl.config(bg=self.config['colors']['wrong'])
 
@@ -375,13 +392,15 @@ class LearnWords():
             fill_lbl()
 
         def check_answer(lbl_id):
-            if str_lbls[lbl_id].get() == self.words[self.pos][word_guess]:
+            right_answer = self.words[self.pos][word_guess]
+            self.play_audio(right_answer)
+            if str_lbls[lbl_id].get() == right_answer:
                 result_lbl.config(text='Right!')
                 result_lbl.config(bg=self.config['colors']['right'])
                 self.tmp_result += 1
             else:
                 msg = str_lbls[lbl_id].get()
-                msg += ' not ' + self.words[self.pos][word_guess]
+                msg += ' not ' + right_answer
                 result_lbl.config(bg=self.config['colors']['wrong'])
                 result_lbl.config(text=msg)
 

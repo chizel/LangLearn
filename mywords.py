@@ -15,11 +15,10 @@ class EnWords():
     wdir = os.path.dirname(os.path.realpath(__file__))
 
     # file with words as json
-    words_file = os.path.join(wdir, 'engwords.txt')
+    words_file = os.path.join(wdir, 'tmp', 'engwords.txt')
 
     def __init__(self, db_name):
         self.db_name = db_name
-        pass
 
     def parse_words_from_ll(self, name=False):
         '''parse words from lingualeo dictionary page, write them as json.
