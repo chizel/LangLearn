@@ -97,9 +97,9 @@ class LearnWords():
         res = random.sample(items, items_count)
 
         if not items[include] in res:
-            res[0] = items[include]
+            position = random.randint(0, items_count - 1)
+            res[position] = items[include]
 
-        random.shuffle(res)
         return res
 
     def init_main_frame(self):
@@ -114,7 +114,6 @@ class LearnWords():
         self.main_frame.place(x=0, y=20)
         text = 'Your score: %d' % self.score
         score_lbl = tk.Label(self.root, text=text)
-        # TODO place it in right position
         score_lbl.place(x=0, y=0)
         #score_lbl.pack()
         return
@@ -160,6 +159,9 @@ class LearnWords():
         task_menu.add_command(
             label='Word-translation',
             command=lambda: self.word_translation(wt=1))
+        task_menu.add_command(
+            label='Build word',
+            command=self.build_word)
 
         help_menu = tk.Menu(menu_bar, tearoff=0)
         menu_bar.add_cascade(label='Help', menu=help_menu)
@@ -170,7 +172,7 @@ class LearnWords():
         # end menu
 
         #TODO REMOVE
-        self.crossword()
+        self.build_word()
         #TODO END
 
         self.root.bind('<Control-q>', lambda e: self.root.destroy())
@@ -655,6 +657,125 @@ class LearnWords():
         check_btn.grid()
         frame.focus()
         return
+
+    def build_word(self):
+        '''From letters user need to build a word from given translation'''
+        self.init_main_frame()
+        self.read_words(limit=self.config['app']['items'])
+        self.pos = 0
+        self.tmp_result = 0
+        gui_title = 'Build word'
+        self.root.title(gui_title)
+
+        frame = tk.Frame(self.main_frame,
+                         width=700,
+                         height=400,
+                         bd=5,
+                         relief=tk.RIDGE,
+                         bg='yellow'
+                         )
+        frame.place(x=0, y=0)
+
+        word_lbl = tk.Label(frame,
+                            font=self.config['gui']['font_size'],
+                            text='Press enter to start',
+                            width=20,
+                            wraplength=150,
+                            justify=tk.CENTER
+                            )
+        result_lbl = tk.Label(frame,
+                              font=self.config['gui']['font_size'])
+
+        chr_frame = tk.Frame(
+            frame,
+            width=200,
+            bg=self.config['colors']['bg']
+            )
+        chr_frame.place(x=0, y=0)
+        chr_frame.grid(row=0, column=0)
+
+        def fill_lbl():
+            #result_lbl.config(bg=self.config['colors']['bg'])
+            # position of the current charcter
+            self.char_pos = 0
+
+            # clearing chr_frame
+            for widget in chr_frame.winfo_children():
+                widget.destroy()
+
+            word = self.words[self.pos]
+            char_lbls = [tk.StringVar() for _ in range(len(word[0]))]
+
+            # labels with answers
+            lbls = [tk.Label(
+                chr_frame,
+                textvariable=char_lbls[i],
+                font=self.config['gui']['font_size']) for i in range(len(word[0]))]
+
+            word_lbl.configure(text=word[1])
+
+            # shuffling characters
+            mixed_word = ''.join(random.sample(word[0],len(word[0])))
+
+            for i in range(len(mixed_word)):
+                char_lbls[i].set(mixed_word[i])
+            for i in range(len(mixed_word)):
+                lbls[i].grid(row=0, column=i)
+
+        def init():
+            frame.bind('<Return>', lambda e: check_answer(e))
+            fill_lbl()
+
+        def check_answer(e):
+            word = self.words[self.pos][0]
+            print(e.char)
+            if not len(e.char) == 1:
+                return
+
+            if e.char in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+                e.char = e.char.lower()
+            elif e.char not in 'abcdefghijklmnopqrstuvwxyz -':
+                return
+
+            if e.char == word[self.char_pos]:
+                print('right')
+                self.char_pos += 1
+
+                # removing character from the chr_frame
+                for widget in chr_frame.winfo_children():
+                    if widget.cget('text') == e.char:
+                        widget.destroy()
+                        break
+
+                if self.char_pos == len(word):
+                    self.play_audio(word)
+                    result_lbl.config(bg=self.config['colors']['right'])
+                    result_lbl.config(text='Right!')
+                    result_lbl.after(500)
+                    self.tmp_result += 1
+                    self.pos += 1
+                    fill_lbl()
+                return
+            else:
+                print('wrong!')
+                msg = 'Right answer is: ' + word
+                result_lbl.config(bg=self.config['colors']['wrong'])
+                result_lbl.config(text=msg)
+
+            self.pos += 1
+            if self.pos >= int(self.config['app']['items']):
+                # send result to main gui
+                self.show_result(frame)
+                return
+            fill_lbl()
+
+        frame.bind('<Return>', lambda e: init())
+        frame.bind('<Key>', lambda e: check_answer(e))
+        word_lbl.grid(row=1, column=0)
+        result_lbl.grid(row=2, column=0)
+        frame.focus()
+        return
+
 
     def show_result(self, frame):
         # destroing frame with app elements
